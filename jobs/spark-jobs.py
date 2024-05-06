@@ -11,7 +11,7 @@ def main():
     .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")\
     .config("spark.hadoop.fs.s3a.access.key", configuration.get('AWS_ACCESS_KEY'))\
     .config("spark.hadoop.fs.s3a.secret.key", configuration.get('AWS_SECRET_KEY')) \
-    .config('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoop.fs.s3a.impl.SimpleAWSCredentialsProvider')\
+    .config('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider')\
     .getOrCreate()
 
     #Adjust the log level to minimize the console output on executor
@@ -85,7 +85,7 @@ def main():
                 .option('subscribe', topic)
                 .option('startingOffsets', 'earliest')
                 .load()
-                .selectExpr('CAST(values AS STRING)')
+                .selectExpr('CAST(value AS STRING)')
                 .select(from_json(col('value'), schema).alias('data'))
                 .select('data.*')
                 .withWatermark('timestamp', '2 minutes')
@@ -103,21 +103,21 @@ def main():
 
 
     vehicleDF = read_kafka_topic('vehicle_data', vehicleSchema).alias('vehicle')
-    gpsDF = read_kafka_topic('gps_data', vehicleSchema).alias('gps')
-    trafficDF = read_kafka_topic('traffic_data', vehicleSchema).alias('traffic')
-    weatherDF = read_kafka_topic('weather_data', vehicleSchema).alias('weather')
-    emergencyDF = read_kafka_topic('emergency_data', vehicleSchema).alias('emergency')
+    gpsDF = read_kafka_topic('gps_data', gpsSchema).alias('gps')
+    trafficDF = read_kafka_topic('traffic_data', trafficSchema).alias('traffic')
+    weatherDF = read_kafka_topic('weather_data', weatherSchema).alias('weather')
+    emergencyDF = read_kafka_topic('emergency_data', emergencySchema).alias('emergency')
 
-    query1 = streamWriter(vehicleDF, 's3a://spark-streaming-data/checkpoints/vehicle_data',
-                 's3a://spark-streaming-data/data/vehicle-data')
-    query2 = streamWriter(gpsDF, 's3a://spark-streaming-data/checkpoints/gps_data',
-                          's3a://spark-streaming-data/data/gps-data')
-    query3 = streamWriter(trafficDF, 's3a://spark-streaming-data/checkpoints/traffic_data',
-                          's3a://spark-streaming-data/data/traffic-data')
-    query4 = streamWriter(weatherDF, 's3a://spark-streaming-data/checkpoints/weather_data',
-                          's3a://spark-streaming-data/data/weather-data')
-    query5 = streamWriter(emergencyDF, 's3a://spark-streaming-data/checkpoints/emergency_data',
-                          's3a://spark-streaming-data/data/emergency-data')
+    query1 = streamWriter(vehicleDF, 's3a://spark-streaming-data-468/checkpoints/vehicle_data',
+                 's3a://spark-streaming-data-468/data/vehicle-data')
+    query2 = streamWriter(gpsDF, 's3a://spark-streaming-data-468/checkpoints/gps_data',
+                          's3a://spark-streaming-data-468/data/gps-data')
+    query3 = streamWriter(trafficDF, 's3a://spark-streaming-data-468/checkpoints/traffic_data',
+                          's3a://spark-streaming-data-468/data/traffic-data')
+    query4 = streamWriter(weatherDF, 's3a://spark-streaming-data-468/checkpoints/weather_data',
+                          's3a://spark-streaming-data-468/data/weather-data')
+    query5 = streamWriter(emergencyDF, 's3a://spark-streaming-data-468/checkpoints/emergency_data',
+                          's3a://spark-streaming-data-468/data/emergency-data')
 
     query5.awaitTermination()
 
